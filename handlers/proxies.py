@@ -1,6 +1,7 @@
 import requests
 import numpy as np
 import pandas as pd
+from delay import normal_delay
 
 class Proxies:
     url = "https://free-proxy-list.net/"
@@ -12,6 +13,7 @@ class Proxies:
     def __init__(self):
         self.prox_req = self.reset_ip_list()
 
+    @normal_delay
     def reset_ip_list(self):
         return requests.get(Proxies.url, headers=Proxies.header)
 
@@ -21,3 +23,5 @@ class Proxies:
 
     def get_new_ip(self):
         return np.random.choice(self._list())
+
+print(Proxies().get_new_ip())
