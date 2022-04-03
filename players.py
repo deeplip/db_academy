@@ -3,6 +3,7 @@ from handlers.data_request import DataRequest
 from handlers.df_html_reader_validator import df_html_validator
 from datetime import date
 import pandas as pd
+from tqdm import tqdm
 
 class PlayersLinks:
     def __init__(self, main_url, yr_diff = 20):
@@ -31,8 +32,11 @@ class PlayersLinks:
 
     def all_seasons_data(self):
         links_list = self._get_players_all_seasons_links()
-        dfs_list = [self._one_season_data(link) for link in links_list]
-        return pd.concat(dfs_list).reset_index(drop = True)
+        dfs_list = []
+        for link in tqdm(links_list):
+            dfs_list.append(self._one_season_data(link))
+        return pd.concat(dfs_list).drop_duplicates().reset_index(drop = True)
 
-main_url = 'https://www.proballers.com/basketball/league/50/greece-heba-a1/players/'
-PlayersLinks(main_url).all_seasons_data()
+class PlayersData:
+    def __init__(self, data_file):
+        self.data = pd.read_csv(data_file)
