@@ -1,6 +1,5 @@
 from handlers.proxies import Proxies
 from handlers.data_request import DataRequest
-from handlers.df_html_reader_validator import df_html_validator
 from datetime import date
 import pandas as pd
 from tqdm import tqdm
@@ -20,7 +19,6 @@ class PlayersLinks:
         historic_yr = today_yr - self.yr_diff
         return [make_url_with_year(year) for year in range(historic_yr, today_yr)]
 
-    @df_html_validator
     def _one_season_data(self, players_links_one_season):
         data_request_object = DataRequest(players_links_one_season, self.proxy_obj.header, self.proxy_obj.get_new_ip())
         df = pd.concat(data_request_object.get_df).reset_index(drop=True)
@@ -68,7 +66,7 @@ class PlayersData:
 
     def __init__(self, league, data_file):
         self.league = league
-        self.data = pd.read_csv(data_file) #.iloc[:10]
+        self.data = pd.read_csv(data_file).iloc[:10]
         self.players = self.collect_players()
 
     def collect_players(self):
