@@ -4,12 +4,15 @@ from datetime import date
 import pandas as pd
 from tqdm import tqdm
 
-
-class PlayersLinks:
+class Links:
     def __init__(self, main_url, yr_diff=20):
         self.main_url = main_url
         self.yr_diff = yr_diff
         self.proxy_obj = Proxies()
+
+class PlayersLinks(Links):
+    def __init__(self, main_url):
+        super().__init__(main_url)
 
     def _get_players_all_seasons_links(self):
         def make_url_with_year(year):
