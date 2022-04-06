@@ -1,26 +1,13 @@
 from handlers.proxies import Proxies
 from handlers.data_request import DataRequest
-from datetime import date
+from handlers.links import Links
 import pandas as pd
 from tqdm import tqdm
 
-class Links:
-    def __init__(self, main_url, yr_diff=20):
-        self.main_url = main_url
-        self.yr_diff = yr_diff
-        self.proxy_obj = Proxies()
 
 class PlayersLinks(Links):
     def __init__(self, main_url):
         super().__init__(main_url)
-
-    def _get_players_all_seasons_links(self):
-        def make_url_with_year(year):
-            return f"{self.main_url}{year}"
-
-        today_yr = date.today().year
-        historic_yr = today_yr - self.yr_diff
-        return [make_url_with_year(year) for year in range(historic_yr, today_yr)]
 
     def _one_season_data(self, players_links_one_season):
         data_request_object = DataRequest(players_links_one_season, self.proxy_obj.header, self.proxy_obj.get_new_ip())
@@ -32,7 +19,7 @@ class PlayersLinks(Links):
         return df.join(links_df, on=['Basketball Player'])
 
     def all_seasons_data(self):
-        links_list = self._get_players_all_seasons_links()
+        links_list = self._get_all_seasons_links()
         dfs_list = []
         for link in tqdm(links_list):
             dfs_list.append(self._one_season_data(link))
