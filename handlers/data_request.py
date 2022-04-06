@@ -15,10 +15,10 @@ class DataRequest:
         return requests.get(self.url, headers=self.header, proxies={"http": self.proxy_ip})
 
     @property
-    @df_html_validator
     def get_soup(self):
         return BeautifulSoup(self.raw_data.text, 'html.parser')
 
     @property
+    @df_html_validator
     def get_df(self):
         return pd.read_html(self.raw_data.text)
