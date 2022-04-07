@@ -54,8 +54,7 @@ class Player:
 
 class PlayersData:
 
-    def __init__(self, league, data_file):
-        self.league = league
+    def __init__(self, data_file):
         self.data = pd.read_csv(data_file)
         self.players = self.collect_players()
 
@@ -88,8 +87,8 @@ class PlayersData:
         concat.columns = [col.lower().replace(' ', '_') for col in concat.columns]
         return concat.reset_index(drop=True)
 
-    def get_and_save(self):
+    def get(self):
         df = self.concat_data()
         to_del = ['fgm', 'fga', '3m', '3a', '1m', '1a']
-        df = df.drop(to_del, axis=1, errors='ignore')
-        df.to_csv(f'data/players_data_{self.league}.csv', index=False)
+        return df.drop(to_del, axis=1, errors='ignore')
+
