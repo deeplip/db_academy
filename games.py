@@ -1,20 +1,23 @@
 from handlers.links import Links
 from handlers.data_request import DataRequest
+from handlers.proxies import Proxies
+from handlers import logs
 import pandas as pd
 from tqdm import tqdm
-from handlers.proxies import Proxies
+import datetime
 
 
 class GamesLinks(Links):
     def __init__(self, main_url):
         super().__init__(main_url)
 
-    def _one_page_one_season_data(self, data_request_object):
+    @staticmethod
+    def _one_page_one_season_data(data_request_object):
         soup = data_request_object.get_soup
 
         def extract_dates():
             dates_objects = soup.find_all("h2", {"class": "generic-section-subtitle"})
-            return [date.decode_contents().strip() for date in dates_objects]
+            return [date_obj.decode_contents().strip() for date_obj in dates_objects]
 
         dates_list = extract_dates()
         dfs_list = data_request_object.get_df
@@ -30,14 +33,18 @@ class GamesLinks(Links):
             for tr in range(1, len(all_tr)):
                 try:
                     links.append(url_part + all_tr[tr].find_all("td")[-1].a["href"])
-                except:
-                    pass
+                except ValueError as link_add_error:
+                    link_err_val = link_add_error.args[0]
+                    logs.logs(datetime.datetime.now(), link_err_val, 'Lack of link?.', False)
             return links
 
         try:
             df = df.dropna()
             df['link'] = get_links()
-        except:
+        except ValueError as df_lack_error:
+            df_err_val = df_lack_error.args[0]
+            date = datetime.datetime.now()
+            logs.logs(date, df_err_val, 'Lack of link?.', False)
             df['link'] = ''
 
         return df
@@ -64,7 +71,8 @@ class GamesLinks(Links):
                 temp_df['season'] = link[-4:]
                 dfs_list.append(temp_df)
 
-        return pd.concat(dfs_list).reset_index(drop = True)
+        return pd.concat(dfs_list).reset_index(drop=True)
+
 
 class Game:
     def __init__(self, time, home_team, away_team, score, date, url, season, proxy_obj):
@@ -85,20 +93,24 @@ class Game:
 
     def fill_metadata(self):
         dfs = self.get_dfs()
-        home_df, away_df = dfs[0], dfs[1]
-        home_df, away_df = home_df.iloc[:-1].copy(), away_df.iloc[:-1].copy()
-        home_df['team_name'], home_df['home_away'] = self.home_team, 1
-        away_df['team_name'], away_df['home_away'] = self.away_team, 0
-        return home_df, away_df
+        if len(dfs) == 2:
+            home_df, away_df = dfs[0], dfs[1]
+            home_df, away_df = home_df.iloc[:-1].copy(), away_df.iloc[:-1].copy()
+            home_df['team_name'], home_df['home_away'] = self.home_team, 1
+            away_df['team_name'], away_df['home_away'] = self.away_team, 0
+            return home_df, away_df
+        else:
+            return None
 
     def concat(self, home_df, away_df):
-        df = pd.concat([home_df, away_df]).reset_index(drop = True)
+        df = pd.concat([home_df, away_df]).reset_index(drop=True)
         df['time'] = self.time
         df['score'] = self.score
         df['date'] = self.date
         df['season'] = self.season
         df['url'] = self.url
         return df
+
 
 class GamesData:
     def __init__(self, games_links_data):
@@ -117,24 +129,16 @@ class GamesData:
         print(f'Iterations: {links.shape[0]}')
         for game_row in tqdm(links.iloc):
             temp_game = Game(*game_row.values, self.proxy_obj)
-            home_df, away_df = temp_game.fill_metadata()
-            df = temp_game.concat(home_df, away_df)
-            dfs_list.append(df)
+            dfs = temp_game.fill_metadata()
+            if dfs:
+                df = temp_game.concat(dfs[0], dfs[1])
+                dfs_list.append(df)
         return pd.concat(dfs_list)
 
     def get(self):
         seasons_list = list(self.games_links_data['season'].drop_duplicates())
         results_dfs_list = []
         for season in seasons_list:
-            one_season_df = self.get_one_season_data(self, season)
+            one_season_df = self.get_one_season_data(season)
             results_dfs_list.append(one_season_df)
         return pd.concat(results_dfs_list)
-
-
-
-
-# print(GamesData('data/games_links_greece.csv').get_one_season_data(2002))
-
-
-
-

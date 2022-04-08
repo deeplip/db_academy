@@ -2,7 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from handlers.delay import normal_delay
-from handlers.df_html_reader_validator import  df_html_validator
+from handlers.df_html_reader_validator import df_html_validator
+
+
 class DataRequest:
     def __init__(self, url, header, proxy_ip):
         self.url = url
